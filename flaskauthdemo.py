@@ -7,6 +7,7 @@ import os
 import re
 import sys
 import pprint
+import json
 
 app = Flask(__name__)
 
@@ -21,8 +22,14 @@ with open('./passwd.txt','r') as file:
         uname,passwd = line.rstrip().split(":")
         userdict[uname] = passwd
 
+with open('./creds.txt','r') as file:
+    creds = json.load(file)
+
 pp = pprint.PrettyPrinter(stream=sys.stderr)
 pp.pprint(userdict)
+
+secret = creds['clientsecret']
+pp.pprint(secret)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
