@@ -2,6 +2,9 @@
 This example app uses Flask and Authlib to demonstrate a simple Python app
 that implements a SSO flow using OAuth2.0.
 
+## Introduction
+The app uses Azure AD OAuth2.0
+
 ## Installation
 
 This example is written in Python 3

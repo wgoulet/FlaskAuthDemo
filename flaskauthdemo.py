@@ -9,7 +9,9 @@ import sys
 import pprint
 import json
 import pickle
+import requests
 from authlib.flask.client import OAuth
+from authlib.jose import jwt
 
 app = Flask(__name__)
 
@@ -46,6 +48,7 @@ oauth.register(
     authorize_url=creds['oauth2authz'],
     authorize_params=None,
     api_base_url=creds['apiendpoint'],
+    server_metadata_url=creds['openiddoc'],
     client_kwargs={'scope': 'openid'}
 )
 azured = oauth.create_client('AzureAD')
@@ -58,20 +61,27 @@ login_manager.login_view = "login"
 @app.route('/login',methods=['GET','POST'])
 def login():
     redirect_uri = url_for('authorize', _external=True)
-    pp.pprint(redirect_uri)
+    #pp.pprint(redirect_uri)
     return azured.authorize_redirect(redirect_uri)
 
 @app.route('/authorize')
 def authorize():
     token = azured.authorize_access_token()
-    pp.pprint(token) 
+    userinfo = azured.parse_id_token(token)
+    pp.pprint(userinfo)
     resp = azured.get('me')
     profile = resp.json()
+    resp = azured.get('me/memberOf')
+    groups = resp.json()
     #pp.pprint(profile)
+    #pp.pprint(groups)
     user = FlaskDemoUser(id=profile['id'])
     user.name = profile['userPrincipalName']
-    pp.pprint(user.id)
-    pp.pprint(user.name)
+    for group in groups['value']:
+        user.groups.append(group['displayName'])
+    #pp.pprint(user.id)
+    #pp.pprint(user.name)
+    #pp.pprint(user.groups)
 
     pickle.dump(user,open("{0}.db".format(user.id),'wb'))
     login_user(user)
@@ -91,12 +101,11 @@ def home():
 
 @login_manager.user_loader
 def load_user(userid):
-    u = FlaskDemoUser(userid)
     pp.pprint("login manager callback")
-    pp.pprint(u.id)
-    pp.pprint(u.name)
     user = pickle.load(open("{0}.db".format(userid),'rb'))
-    
+    pp.pprint(user.id)
+    pp.pprint(user.name)
+    pp.pprint(user.groups)
     return user
 
 if __name__=="__main__":
