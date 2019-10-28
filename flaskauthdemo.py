@@ -62,40 +62,39 @@ login_manager.login_view = "login"
 @app.route('/login',methods=['GET','POST'])
 def login():
     redirect_uri = url_for('authorize', _external=True)
-    #pp.pprint(redirect_uri)
     return azured.authorize_redirect(redirect_uri)
 
 @app.route('/authorize')
 def authorize():
     token = azured.authorize_access_token()
-    #pp.pprint(token)
     # Safe to use this without validating the token because authlib
     # already validated the token for me, using this method because
     # stable version of authlib doesn't seem to support decoding id_tokens
+    pp.pprint("id token")
+    pp.pprint(token['id_token'])
+    pp.pprint("access token")
+    pp.pprint(token['access_token'])
     idclaims = jwt.decode(token['id_token'],verify=False)
+    accesstokendetails = jwt.decode(token['access_token'],verify=False)
+    pp.pprint("id claims")
     pp.pprint(idclaims)
-    #userinfo = azured.parse_id_token(token)
-    #pp.pprint(userinfo)
-    resp = azured.get('me')
-    profile = resp.json()
-    # This method lets me get the user's groups directly from graph API
-    # but id token already contains the group ID
-    resp = azured.get('me/memberOf')
-    groups = resp.json()
-    #pp.pprint(profile)
-    #pp.pprint(groups)
-    user = FlaskDemoUser(id=profile['id'])
-    user.name = profile['userPrincipalName']
-    user.groups = idclaims['groups']
-    #for group in groups['value']:
-        #user.groups.append(group['displayName'])
-    #pp.pprint(user.id)
-    #pp.pprint(user.name)
-    #pp.pprint(user.groups)
-
+    # Get user details from the access_token
+    pp.pprint(accesstokendetails)
+    grouplist = []
+    # Use Graph API to get the friendly name of the group from the ID token
+    # ideally an admin would have configured my app with the list of groups
+    # and friendly names that are available. This way I don't have to hit
+    # Graph API to get all the info I need for my user.
+    for group in idclaims['groups']:
+        resp = azured.get('groups/{0}'.format(group))
+        grouplist.append(resp.json()['displayName'])
+    user = FlaskDemoUser(id=accesstokendetails['oid'])
+    user.name = accesstokendetails['upn']
+    user.groups = grouplist
+    # Saving the user who logged in in a datafile I
+    # can refer to later
     pickle.dump(user,open("{0}.db".format(user.id),'wb'))
     login_user(user)
-    # do something with the token and profile
     return redirect('/')
 
 @app.route("/logout")
