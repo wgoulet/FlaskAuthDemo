@@ -11,7 +11,8 @@ import json
 import pickle
 import requests
 from authlib.flask.client import OAuth
-from authlib.jose import jwt
+#from authlib.jose import jwt
+import jwt
 
 app = Flask(__name__)
 
@@ -67,18 +68,27 @@ def login():
 @app.route('/authorize')
 def authorize():
     token = azured.authorize_access_token()
-    userinfo = azured.parse_id_token(token)
-    pp.pprint(userinfo)
+    #pp.pprint(token)
+    # Safe to use this without validating the token because authlib
+    # already validated the token for me, using this method because
+    # stable version of authlib doesn't seem to support decoding id_tokens
+    idclaims = jwt.decode(token['id_token'],verify=False)
+    pp.pprint(idclaims)
+    #userinfo = azured.parse_id_token(token)
+    #pp.pprint(userinfo)
     resp = azured.get('me')
     profile = resp.json()
+    # This method lets me get the user's groups directly from graph API
+    # but id token already contains the group ID
     resp = azured.get('me/memberOf')
     groups = resp.json()
     #pp.pprint(profile)
     #pp.pprint(groups)
     user = FlaskDemoUser(id=profile['id'])
     user.name = profile['userPrincipalName']
-    for group in groups['value']:
-        user.groups.append(group['displayName'])
+    user.groups = idclaims['groups']
+    #for group in groups['value']:
+        #user.groups.append(group['displayName'])
     #pp.pprint(user.id)
     #pp.pprint(user.name)
     #pp.pprint(user.groups)

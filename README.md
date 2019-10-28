@@ -3,7 +3,15 @@ This example app uses Flask and Authlib to demonstrate a simple Python app
 that implements a SSO flow using OAuth2.0.
 
 ## Introduction
-The app uses Azure AD OAuth2.0
+The app uses Azure AD OAuth2.0 for the IdP. 
+
+## Prerequisites
+
+You must have an Azure AD account with P1/P2 tiers to enable SSO.
+
+Your application must be registered in Azure AD and configured to return 'SecurityGroup'
+in the groupMembershipClaims in your application manifest. Read more details on this
+here: https://docs.microsoft.com/en-us/azure/architecture/multitenant-identity/app-roles
 
 ## Installation
 
