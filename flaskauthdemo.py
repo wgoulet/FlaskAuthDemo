@@ -50,7 +50,7 @@ oauth.register(
     authorize_params=None,
     api_base_url=creds['apiendpoint'],
     server_metadata_url=creds['openiddoc'],
-    client_kwargs={'scope': 'openid'}
+    client_kwargs={'scope': 'openid profile'}
 )
 azured = oauth.create_client('AzureAD')
 
@@ -75,11 +75,9 @@ def authorize():
     pp.pprint("access token")
     pp.pprint(token['access_token'])
     idclaims = jwt.decode(token['id_token'],verify=False)
-    accesstokendetails = jwt.decode(token['access_token'],verify=False)
     pp.pprint("id claims")
     pp.pprint(idclaims)
     # Get user details from the access_token
-    pp.pprint(accesstokendetails)
     grouplist = []
     # Use Graph API to get the friendly name of the group from the ID token
     # ideally an admin would have configured my app with the list of groups
@@ -88,8 +86,8 @@ def authorize():
     for group in idclaims['groups']:
         resp = azured.get('groups/{0}'.format(group))
         grouplist.append(resp.json()['displayName'])
-    user = FlaskDemoUser(id=accesstokendetails['oid'])
-    user.name = accesstokendetails['upn']
+    user = FlaskDemoUser(id=idclaims['oid'])
+    user.name = idclaims['preferred_username']
     user.groups = grouplist
     # Saving the user who logged in in a datafile I
     # can refer to later
