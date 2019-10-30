@@ -41,7 +41,7 @@ for key in creds:
 oauth = OAuth(app)
 
 oauth.register(
-    name='AzureAD',
+    name='OktaSSO',
     client_id=creds['clientid'],
     client_secret=creds['clientsecret'],
     access_token_url=creds['oauth2token'],
@@ -52,7 +52,7 @@ oauth.register(
     server_metadata_url=creds['openiddoc'],
     client_kwargs={'scope': 'openid profile groups'}
 )
-azured = oauth.create_client('AzureAD')
+azured = oauth.create_client('OktaSSO')
 
 
 login_manager = LoginManager()
