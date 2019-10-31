@@ -93,10 +93,8 @@ def authorize():
     pp.pprint(idclaims)
     # Get user details from the access_token
     grouplist = []
-    # Use Graph API to get the friendly name of the group from the ID token
-    # ideally an admin would have configured my app with the list of groups
-    # and friendly names that are available. This way I don't have to hit
-    # Graph API to get all the info I need for my user.
+    # For Okta getting the groups returned in id_token/userinfo requires additional config
+    # I don't quite understand. So stopping the okta example here. 
     resp = azured.get('userinfo')
     pp.pprint(resp.json())
     if 'groups' in idclaims.keys():
