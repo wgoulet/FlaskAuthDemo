@@ -13,6 +13,20 @@ import requests
 from authlib.flask.client import OAuth
 #from authlib.jose import jwt
 import jwt
+import logging
+
+from http.client import HTTPConnection  # py3
+
+log = logging.getLogger('urllib3')
+log.setLevel(logging.DEBUG)
+
+# logging from urllib3 to console
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+log.addHandler(ch)
+
+# print statements from `http.client.HTTPConnection` to console/stdout
+HTTPConnection.debuglevel = 1
 
 app = Flask(__name__)
 
@@ -83,6 +97,8 @@ def authorize():
     # ideally an admin would have configured my app with the list of groups
     # and friendly names that are available. This way I don't have to hit
     # Graph API to get all the info I need for my user.
+    resp = azured.get('userinfo')
+    pp.pprint(resp.json())
     if 'groups' in idclaims.keys():
         for group in idclaims['groups']:
             resp = azured.get('groups/{0}'.format(group))
