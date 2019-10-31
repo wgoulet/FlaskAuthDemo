@@ -64,7 +64,7 @@ oauth.register(
     authorize_params=None,
     api_base_url=creds['apiendpoint'],
     server_metadata_url=creds['openiddoc'],
-    client_kwargs={'scope': 'openid profile groups'}
+    client_kwargs={'scope': 'openid profile'}
 )
 azured = oauth.create_client('OktaSSO')
 
@@ -95,14 +95,14 @@ def authorize():
     grouplist = []
     # For Okta getting the groups returned in id_token/userinfo requires additional config
     # I don't quite understand. So stopping the okta example here. 
-    resp = azured.get('userinfo')
+    resp = azured.get('userinfo.openid')
     pp.pprint(resp.json())
     if 'groups' in idclaims.keys():
         for group in idclaims['groups']:
             resp = azured.get('groups/{0}'.format(group))
             grouplist.append(resp.json()['displayName'])
     user = FlaskDemoUser(id=idclaims['sub'])
-    user.name = idclaims['preferred_username']
+    user.name = idclaims['sub']
     user.groups = grouplist
     # Saving the user who logged in in a datafile I
     # can refer to later

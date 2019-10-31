@@ -1,1 +1,1 @@
-credsokta.txt
+credsping.txt
