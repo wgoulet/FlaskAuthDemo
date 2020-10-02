@@ -10,7 +10,7 @@ import pprint
 import json
 import pickle
 import requests
-from authlib.flask.client import OAuth
+from authlib.integrations.flask_client import OAuth
 #from authlib.jose import jwt
 import jwt
 
@@ -41,7 +41,7 @@ for key in creds:
 oauth = OAuth(app)
 
 oauth.register(
-    name='AzureAD',
+    name='keycloak',
     client_id=creds['clientid'],
     client_secret=creds['clientsecret'],
     access_token_url=creds['oauth2token'],
@@ -52,7 +52,6 @@ oauth.register(
     server_metadata_url=creds['openiddoc'],
     client_kwargs={'scope': 'openid profile groups'}
 )
-azured = oauth.create_client('AzureAD')
 
 
 login_manager = LoginManager()
@@ -62,11 +61,11 @@ login_manager.login_view = "login"
 @app.route('/login',methods=['GET','POST'])
 def login():
     redirect_uri = url_for('authorize', _external=True)
-    return azured.authorize_redirect(redirect_uri)
+    return oauth.keycloak.authorize_redirect(redirect_uri)
 
 @app.route('/authorize')
 def authorize():
-    token = azured.authorize_access_token()
+    token = oauth.keycloak.authorize_access_token()
     # Safe to use this without validating the token because authlib
     # already validated the token for me, using this method because
     # stable version of authlib doesn't seem to support decoding id_tokens
@@ -85,7 +84,7 @@ def authorize():
     # Graph API to get all the info I need for my user.
     if 'groups' in idclaims.keys():
         for group in idclaims['groups']:
-            resp = azured.get('groups/{0}'.format(group))
+            resp = oauth.keycloak.get('groups/{0}'.format(group))
             grouplist.append(resp.json()['displayName'])
     user = FlaskDemoUser(id=idclaims['sub'])
     user.name = idclaims['preferred_username']
