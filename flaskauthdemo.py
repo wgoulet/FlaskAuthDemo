@@ -11,7 +11,6 @@ import json
 import pickle
 import requests
 from authlib.integrations.flask_client import OAuth
-#from authlib.jose import jwt
 import jwt
 
 app = Flask(__name__)
@@ -78,17 +77,13 @@ def authorize():
     pp.pprint(idclaims)
     # Get user details from the access_token
     grouplist = []
-    # Use Graph API to get the friendly name of the group from the ID token
-    # ideally an admin would have configured my app with the list of groups
-    # and friendly names that are available. This way I don't have to hit
-    # Graph API to get all the info I need for my user.
     if 'groups' in idclaims.keys():
         for group in idclaims['groups']:
-            resp = oauth.keycloak.get('groups/{0}'.format(group))
-            grouplist.append(resp.json()['displayName'])
+            grouplist.append(group)
     user = FlaskDemoUser(id=idclaims['sub'])
     user.name = idclaims['preferred_username']
     user.groups = grouplist
+    user.claims = idclaims
     # Saving the user who logged in in a datafile I
     # can refer to later
     pickle.dump(user,open("{0}.db".format(user.id),'wb'))
